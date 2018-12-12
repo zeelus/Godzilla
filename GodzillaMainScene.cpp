@@ -15,6 +15,11 @@
 #include <Urho3D/Graphics/Terrain.h>
 #include <Urho3D/Graphics/AnimatedModel.h>
 #include <Urho3D/Graphics/AnimationController.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
+#include <Urho3D/Graphics/Skeleton.h>
+#include <Urho3D/Physics/PhysicsWorld.h>
+#include <Urho3D/Physics/RigidBody.h>
+#include <Urho3D/Physics/CollisionShape.h>
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Input/Input.h>
 
@@ -55,6 +60,8 @@ void GodzillaMainScene::CreateScene() {
 
     this->scene_ = new Scene(this->context_);
 
+    scene_->CreateComponent<DebugRenderer>();
+
     this->scene_->CreateComponent<Octree>();
 
     this->SetupCamera();
@@ -76,6 +83,12 @@ void GodzillaMainScene::CreateScene() {
     terrain->SetCastShadows(true);
     terrain->SetOccluder(true);
 
+    auto* terrainBody = terrainNode->CreateComponent<RigidBody>();
+    terrainBody->SetCollisionLayer(2);
+
+    auto* terrainShape = terrainNode->CreateComponent<CollisionShape>();
+    terrainShape->SetTerrain();
+
 }
 
 void GodzillaMainScene::SetupCamera() {
@@ -93,6 +106,8 @@ void GodzillaMainScene::SetupCamera() {
     camera_->SetFarClip(600);
     camera_->SetNearClip(0.1);
     camera_->SetFov(75);
+
+    //camera_->SetFillMode(FillMode::FILL_WIREFRAME);
 
     this->cameraNode_->SetPosition(Vector3(13, 30, 30));
     this->cameraNode_->SetDirection(Vector3::FORWARD);
@@ -157,7 +172,7 @@ void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData
 }
 
 void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData) {
-    //scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
+    scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
 }
 
 void GodzillaMainScene::SetupCharacter() {
@@ -173,6 +188,32 @@ void GodzillaMainScene::SetupCharacter() {
 
     auto* characterComponent = this->characterNode->CreateComponent<CharacterComponent>();
 
+    auto* body = this->characterNode->CreateComponent<RigidBody>();
+    body->SetCollisionLayer(1);
+    body->SetMass(10.0f);
+    body->SetAngularFactor(Vector3::ZERO);
+    body->SetCollisionEventMode(COLLISION_ALWAYS);
+    body->SetFriction(100.0f);
+
+    auto* shape = this->characterNode->CreateComponent<CollisionShape>();
+    shape->SetCapsule(800.0f, 1800.0f, Vector3(0.0f, 900.0f, -100.0f));
+
+    auto tail_3BoneNode = modelObject->GetSkeleton().GetBone("tail_3")->node_;
+
+    auto* tail_3Body = tail_3BoneNode->CreateComponent<RigidBody>();
+    tail_3Body->SetCollisionLayer(1);
+    tail_3Body->SetMass(2.0f);
+    tail_3Body->SetAngularFactor(Vector3::ZERO);
+    tail_3Body->SetCollisionEventMode(COLLISION_ALWAYS);
+    tail_3Body->SetFriction(100.0f);
+
+    auto* tail_3Shape = tail_3BoneNode->CreateComponent<CollisionShape>();
+    tail_3Shape->SetCapsule(60, 60, Vector3::ZERO);
+
     characterComponent->SetAnimationState(GodzillaState::IDLE);
 
+}
+
+void GodzillaMainScene::CreateTestBox() {
+    
 }
