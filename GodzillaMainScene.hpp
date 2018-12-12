@@ -8,6 +8,9 @@
 #include <Urho3D/Engine/Application.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Graphics/Camera.h>
+#include <Urho3D/Graphics/Skeleton.h>
+
+
 
 
 using namespace Urho3D;
@@ -45,6 +48,8 @@ private:
     void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
 
     void CreateTestBox();
+
+    void CreateCollisionShapeForBone(Skeleton& skeleton, String name, float width, float height, Vector3 position = Vector3::ZERO);
 };
 
 

@@ -198,22 +198,53 @@ void GodzillaMainScene::SetupCharacter() {
     auto* shape = this->characterNode->CreateComponent<CollisionShape>();
     shape->SetCapsule(800.0f, 1800.0f, Vector3(0.0f, 900.0f, -100.0f));
 
-    auto tail_3BoneNode = modelObject->GetSkeleton().GetBone("tail_3")->node_;
-
-    auto* tail_3Body = tail_3BoneNode->CreateComponent<RigidBody>();
-    tail_3Body->SetCollisionLayer(1);
-    tail_3Body->SetMass(2.0f);
-    tail_3Body->SetAngularFactor(Vector3::ZERO);
-    tail_3Body->SetCollisionEventMode(COLLISION_ALWAYS);
-    tail_3Body->SetFriction(100.0f);
-
-    auto* tail_3Shape = tail_3BoneNode->CreateComponent<CollisionShape>();
-    tail_3Shape->SetCapsule(60, 60, Vector3::ZERO);
+    auto skeleton = modelObject->GetSkeleton();
+    this->CreateCollisionShapeForBone(skeleton, String("tail_3"), 30.0f, 30.0f);
+    this->CreateCollisionShapeForBone(skeleton, String("tail_4"), 20.0f, 50.0f, Vector3(0.0f, 0.0f, 10.0f));
+    this->CreateCollisionShapeForBone(skeleton, String("tail_6"), 20.0f, 30.0f, Vector3(0.0f, 0.0f, 5.0f));
+    this->CreateCollisionShapeForBone(skeleton, String("tail_8"), 10.0f, 40.0f, Vector3(0.0f, 10.0f, 5.0f));
 
     characterComponent->SetAnimationState(GodzillaState::IDLE);
 
 }
 
 void GodzillaMainScene::CreateTestBox() {
-    
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    // Create a smaller box at camera position
+    Node* boxNode = scene_->CreateChild("SmallBox");
+    boxNode->SetPosition(Vector3(0.0f, 100.0, 100.0));
+
+
+    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneSmall.xml"));
+    boxObject->SetCastShadows(true);
+
+    // Create physics components, use a smaller mass also
+    auto* body = boxNode->CreateComponent<RigidBody>();
+    body->SetMass(0.25f);
+    body->SetFriction(0.75f);
+    auto* shape = boxNode->CreateComponent<CollisionShape>();
+    shape->SetBox(Vector3::ONE);
+}
+
+void GodzillaMainScene::CreateCollisionShapeForBone(Skeleton& skeleton, String name, float width, float height,
+                                                    Vector3 position) {
+    auto boneNode = skeleton.GetBone(name)->node_;
+
+    if (!boneNode) {
+        return;
+    }
+
+    auto* tail_3Body = boneNode->CreateComponent<RigidBody>();
+    tail_3Body->SetCollisionLayer(1);
+    tail_3Body->SetMass(2.0f);
+    tail_3Body->SetAngularFactor(Vector3::ZERO);
+    tail_3Body->SetCollisionEventMode(COLLISION_ALWAYS);
+    tail_3Body->SetFriction(100.0f);
+
+    auto* tail_3Shape = boneNode->CreateComponent<CollisionShape>();
+    tail_3Shape->SetCapsule(width, height, position);
+
 }
