@@ -23,6 +23,7 @@ void CharacterComponent::SetAnimationState(GodzillaState state) {
             animationController->Play("Models/Godzilla/Animations/GodzillaIdle.ani", 0, true);
             break;
         case GodzillaState::RUN :
+            animationController->Play("Models/Godzilla/Animations/GodzillaRun.ani", 0, true);
             break;
     }
 }

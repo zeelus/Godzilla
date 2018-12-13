@@ -152,6 +152,8 @@ void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData
         cameraNode_->Translate(Vector3( 1, 0, 0)*MOVE_SPEED*timeStep);
     if(input->GetKeyDown(KEY_ESCAPE))
         this->engine_->Exit();
+    if(input->GetMouseButtonPress(MOUSEB_LEFT))
+        this->CreateTestBox();
 
     if(!GetSubsystem<Input>()->IsMouseVisible())
     {
@@ -204,7 +206,7 @@ void GodzillaMainScene::SetupCharacter() {
     this->CreateCollisionShapeForBone(skeleton, String("tail_6"), 20.0f, 30.0f, Vector3(0.0f, 0.0f, 5.0f));
     this->CreateCollisionShapeForBone(skeleton, String("tail_8"), 10.0f, 40.0f, Vector3(0.0f, 10.0f, 5.0f));
 
-    characterComponent->SetAnimationState(GodzillaState::IDLE);
+    characterComponent->SetAnimationState(GodzillaState::RUN);
 
 }
 
@@ -213,9 +215,9 @@ void GodzillaMainScene::CreateTestBox() {
 
     // Create a smaller box at camera position
     Node* boxNode = scene_->CreateChild("SmallBox");
-    boxNode->SetPosition(Vector3(0.0f, 100.0, 100.0));
-
-
+    boxNode->SetPosition(cameraNode_->GetPosition());
+    boxNode->SetRotation(cameraNode_->GetRotation());
+    boxNode->SetScale(2.5f);
     auto* boxObject = boxNode->CreateComponent<StaticModel>();
     boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneSmall.xml"));
@@ -223,10 +225,16 @@ void GodzillaMainScene::CreateTestBox() {
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<RigidBody>();
-    body->SetMass(0.25f);
+    body->SetMass(2.50f);
     body->SetFriction(0.75f);
     auto* shape = boxNode->CreateComponent<CollisionShape>();
     shape->SetBox(Vector3::ONE);
+
+    const float OBJECT_VELOCITY = 30.0f;
+
+    // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
+    // to overcome gravity better
+    body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
 }
 
 void GodzillaMainScene::CreateCollisionShapeForBone(Skeleton& skeleton, String name, float width, float height,
@@ -237,14 +245,14 @@ void GodzillaMainScene::CreateCollisionShapeForBone(Skeleton& skeleton, String n
         return;
     }
 
-    auto* tail_3Body = boneNode->CreateComponent<RigidBody>();
-    tail_3Body->SetCollisionLayer(1);
-    tail_3Body->SetMass(2.0f);
-    tail_3Body->SetAngularFactor(Vector3::ZERO);
-    tail_3Body->SetCollisionEventMode(COLLISION_ALWAYS);
-    tail_3Body->SetFriction(100.0f);
+    auto* body = boneNode->CreateComponent<RigidBody>();
+    body->SetCollisionLayer(1);
+    body->SetMass(2.0f);
+    body->SetAngularFactor(Vector3::ZERO);
+    body->SetCollisionEventMode(COLLISION_ALWAYS);
+    body->SetFriction(100.0f);
 
-    auto* tail_3Shape = boneNode->CreateComponent<CollisionShape>();
-    tail_3Shape->SetCapsule(width, height, position);
+    auto* shape = boneNode->CreateComponent<CollisionShape>();
+    shape->SetCapsule(width, height, position);
 
 }
