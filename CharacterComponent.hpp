@@ -7,6 +7,7 @@
 
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Scene/LogicComponent.h>
+#include <Urho3D/Input/Controls.h>
 
 using namespace Urho3D;
 
@@ -24,6 +25,8 @@ public:
     CharacterComponent(Context* context): LogicComponent(context) {};
 
     void SetAnimationState(GodzillaState state);
+
+    Controls controls_;
 };
 
 

@@ -89,6 +89,14 @@ void GodzillaMainScene::CreateScene() {
     auto* terrainShape = terrainNode->CreateComponent<CollisionShape>();
     terrainShape->SetTerrain();
 
+    auto* waterNode_ = scene_->CreateChild("Water");
+    waterNode_->SetScale(Vector3(2048.0f, 1.0f, 2048.0f));
+    waterNode_->SetPosition(Vector3(0.0f, 40.0f, 0.0f));
+    auto* water = waterNode_->CreateComponent<StaticModel>();
+    water->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
+    water->SetMaterial(cache->GetResource<Material>("Materials/Water.xml"));
+    water->SetViewMask(0x80000000);
+
 }
 
 void GodzillaMainScene::SetupCamera() {
@@ -109,8 +117,8 @@ void GodzillaMainScene::SetupCamera() {
 
     //camera_->SetFillMode(FillMode::FILL_WIREFRAME);
 
-    this->cameraNode_->SetPosition(Vector3(13, 30, 30));
-    this->cameraNode_->SetDirection(Vector3::FORWARD);
+    //this->cameraNode_->SetPosition(Vector3(13, 30, 30));
+    //this->cameraNode_->SetDirection(Vector3::FORWARD);
 }
 
 void GodzillaMainScene::SetupViewport()  {
@@ -132,49 +140,87 @@ void  GodzillaMainScene::SubscribeToEvents()
 }
 
 void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData) {
-    float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
-    // Movement speed as world units per second
-    float MOVE_SPEED=10.0f;
-    // Mouse sensitivity as degrees per pixel
-    const float MOUSE_SENSITIVITY = 0.1f;
 
-    // camera movement
-    Input* input = GetSubsystem<Input>();
-    if(input->GetQualifierDown(Qualifier(1)))  // 1 is shift, 2 is ctrl, 4 is alt
-        MOVE_SPEED*=10;
-    if(input->GetKeyDown(KEY_W))
-        cameraNode_->Translate(Vector3(0, 0, 1)*MOVE_SPEED*timeStep);
-    if(input->GetKeyDown(KEY_S))
-        cameraNode_->Translate(Vector3(0, 0, -1)*MOVE_SPEED*timeStep);
-    if(input->GetKeyDown(KEY_A))
-        cameraNode_->Translate(Vector3(-1, 0, 0)*MOVE_SPEED*timeStep);
-    if(input->GetKeyDown(KEY_D))
-        cameraNode_->Translate(Vector3( 1, 0, 0)*MOVE_SPEED*timeStep);
-    if(input->GetKeyDown(KEY_ESCAPE))
-        this->engine_->Exit();
-    if(input->GetMouseButtonPress(MOUSEB_LEFT))
-        this->CreateTestBox();
+    auto* input = this->GetSubsystem<Input>();
 
-    if(!GetSubsystem<Input>()->IsMouseVisible())
-    {
-        IntVector2 mouseMove=input->GetMouseMove();
-        if( mouseMove.x_ > -2000000000 && mouseMove.y_ > -2000000000 )
-        {
-            static float yaw_=0;
-            static float pitch_=0;
-            yaw_ += MOUSE_SENSITIVITY*mouseMove.x_;
-            pitch_ += MOUSE_SENSITIVITY*mouseMove.y_;
-            pitch_ = Clamp(pitch_, -90.0f, 90.0f);
-            // Reset rotation and set yaw and pitch again
-            this->cameraNode_->SetDirection(Vector3::FORWARD);
-            this->cameraNode_->Yaw(yaw_);
-            this->cameraNode_->Pitch(pitch_);
-        }
+    if (characterComponent) {
+
+        characterComponent->controls_.Set(CTRL_FORWARD | CTRL_BACK | CTRL_LEFT | CTRL_RIGHT, false);
+
+        characterComponent->controls_.Set(CTRL_FORWARD, input->GetKeyDown(KEY_W));
+        characterComponent->controls_.Set(CTRL_BACK, input->GetKeyDown(KEY_S));
+        characterComponent->controls_.Set(CTRL_LEFT, input->GetKeyDown(KEY_A));
+        characterComponent->controls_.Set(CTRL_RIGHT, input->GetKeyDown(KEY_D));
+
+
+        characterComponent->controls_.yaw_ += (float)input->GetMouseMoveX() * YAW_SENSITIVITY;
+        characterComponent->controls_.pitch_ += (float)input->GetMouseMoveY() * YAW_SENSITIVITY;
+        characterComponent->controls_.pitch_ = Clamp(characterComponent->controls_.pitch_, -80.0f, 80.0f);
+        characterNode->SetRotation(Quaternion(characterComponent->controls_.yaw_ , Vector3::UP));
     }
+
+
 }
 
 void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData) {
     scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
+
+    if(isDebug) {
+        float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
+        // Movement speed as world units per second
+        float MOVE_SPEED = 10.0f;
+        // Mouse sensitivity as degrees per pixel
+        const float MOUSE_SENSITIVITY = 0.1f;
+
+        // camera movement
+        Input *input = GetSubsystem<Input>();
+        if (input->GetQualifierDown(Qualifier(1)))  // 1 is shift, 2 is ctrl, 4 is alt
+            MOVE_SPEED *= 10;
+        if (input->GetKeyDown(KEY_W))
+            cameraNode_->Translate(Vector3(0, 0, 1) * MOVE_SPEED * timeStep);
+        if (input->GetKeyDown(KEY_S))
+            cameraNode_->Translate(Vector3(0, 0, -1) * MOVE_SPEED * timeStep);
+        if (input->GetKeyDown(KEY_A))
+            cameraNode_->Translate(Vector3(-1, 0, 0) * MOVE_SPEED * timeStep);
+        if (input->GetKeyDown(KEY_D))
+            cameraNode_->Translate(Vector3(1, 0, 0) * MOVE_SPEED * timeStep);
+        if (input->GetKeyDown(KEY_ESCAPE))
+            this->engine_->Exit();
+        if (input->GetMouseButtonPress(MOUSEB_LEFT))
+            this->CreateTestBox();
+
+        if (!GetSubsystem<Input>()->IsMouseVisible()) {
+            IntVector2 mouseMove = input->GetMouseMove();
+            if (mouseMove.x_ > -2000000000 && mouseMove.y_ > -2000000000) {
+                static float yaw_ = 0;
+                static float pitch_ = 0;
+                yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
+                pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
+                pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+                // Reset rotation and set yaw and pitch again
+                this->cameraNode_->SetDirection(Vector3::FORWARD);
+                this->cameraNode_->Yaw(yaw_);
+                this->cameraNode_->Pitch(pitch_);
+            }
+        }
+    } else {
+
+        const Quaternion& rot = characterNode->GetRotation();
+        Quaternion dir = rot * Quaternion(characterComponent->controls_.pitch_, Vector3::RIGHT);
+
+        Vector3 aimPoint = characterNode->GetPosition() + rot * Vector3(0.0f, 80.0f, 0.0f);
+
+        Vector3 rayDir = dir * Vector3::BACK;
+        float rayDistance = CAMERA_INITIAL_DIST;
+        PhysicsRaycastResult result;
+        scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, Ray(aimPoint, rayDir), rayDistance, 2);
+        if (result.body_)
+            rayDistance = Min(rayDistance, result.distance_);
+        rayDistance = Clamp(rayDistance, CAMERA_MIN_DIST, CAMERA_MAX_DIST);
+
+        cameraNode_->SetPosition(aimPoint + rayDir * rayDistance);
+        cameraNode_->SetRotation(dir);
+    }
 }
 
 void GodzillaMainScene::SetupCharacter() {
@@ -182,17 +228,19 @@ void GodzillaMainScene::SetupCharacter() {
     this->characterNode = this->scene_->CreateChild("CharacterNode");
     this->characterNode->SetScale(0.05);
 
-    AnimatedModel* modelObject = this->characterNode->CreateComponent<AnimatedModel>();
+    auto* modelNode = this->characterNode->CreateChild("CharacterModel");
+    modelNode->SetRotation(Quaternion(180.0f, Vector3::UP));
+    AnimatedModel* modelObject = modelNode->CreateComponent<AnimatedModel>();
     modelObject->SetModel(cache->GetResource<Model>("Models/Godzilla/Godzilla.mdl"));
     modelObject->SetMaterial(cache->GetResource<Material>("Models/Godzilla/Materials/Material.xml"));
     modelObject->SetCastShadows(true);
-    this->characterNode->CreateComponent<AnimationController>();
+    modelNode->CreateComponent<AnimationController>();
 
-    auto* characterComponent = this->characterNode->CreateComponent<CharacterComponent>();
+    this->characterComponent = modelNode->CreateComponent<CharacterComponent>();
 
     auto* body = this->characterNode->CreateComponent<RigidBody>();
     body->SetCollisionLayer(1);
-    body->SetMass(10.0f);
+    body->SetMass(100.0f);
     body->SetAngularFactor(Vector3::ZERO);
     body->SetCollisionEventMode(COLLISION_ALWAYS);
     body->SetFriction(100.0f);
@@ -232,8 +280,6 @@ void GodzillaMainScene::CreateTestBox() {
 
     const float OBJECT_VELOCITY = 30.0f;
 
-    // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
-    // to overcome gravity better
     body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
 }
 
