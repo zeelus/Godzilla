@@ -67,7 +67,7 @@ void GodzillaMainScene::CreateScene() {
     this->SetupCamera();
 
     auto* skyNode = this->scene_->CreateChild("Sky");
-    skyNode->SetScale(1500.0f);
+    skyNode->SetScale(15000.0f);
     auto* skybox = skyNode->CreateComponent<Skybox>();
     skybox->SetModel(cache->GetResource<Model>("Data/Models/Box.mdl"));
     skybox->SetMaterial(cache->GetResource<Material>("Data/Materials/Skybox.xml"));
@@ -76,7 +76,7 @@ void GodzillaMainScene::CreateScene() {
 
     auto* terrain = terrainNode->CreateComponent<Terrain>();
     terrain->SetPatchSize(128);
-    terrain->SetSpacing(Vector3(2, 0.5, 2));
+    terrain->SetSpacing(Vector3(4, 0.5, 4));
     terrain->SetSmoothing(true);
     terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
     terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
@@ -90,7 +90,7 @@ void GodzillaMainScene::CreateScene() {
     terrainShape->SetTerrain();
 
     auto* waterNode_ = scene_->CreateChild("Water");
-    waterNode_->SetScale(Vector3(2048.0f, 1.0f, 2048.0f));
+    waterNode_->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
     waterNode_->SetPosition(Vector3(0.0f, 40.0f, 0.0f));
     auto* water = waterNode_->CreateComponent<StaticModel>();
     water->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
@@ -104,14 +104,14 @@ void GodzillaMainScene::SetupCamera() {
     auto* zoneNode = this->scene_->CreateChild("Zone");
     auto* zone = zoneNode->CreateComponent<Zone>();
     zone->SetBoundingBox(BoundingBox(-50000.0f, 50000.0f));
-    zone->SetFogStart(500.0f);
-    zone->SetFogEnd(600.0f);
+    zone->SetFogStart(1000.0f);
+    zone->SetFogEnd(3000.0f);
     zone->SetFogColor(Color(1, 1, 1));
     zone->SetAmbientColor(Color(0.5, 0.5, 0.5));
 
     cameraNode_ = scene_->CreateChild("Camera");
     camera_ = cameraNode_->CreateComponent<Camera>();
-    camera_->SetFarClip(600);
+    camera_->SetFarClip(1600);
     camera_->SetNearClip(0.1);
     camera_->SetFov(75);
 
@@ -167,12 +167,9 @@ void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap&
 
     if(isDebug) {
         float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
-        // Movement speed as world units per second
         float MOVE_SPEED = 10.0f;
-        // Mouse sensitivity as degrees per pixel
         const float MOUSE_SENSITIVITY = 0.1f;
 
-        // camera movement
         Input *input = GetSubsystem<Input>();
         if (input->GetQualifierDown(Qualifier(1)))  // 1 is shift, 2 is ctrl, 4 is alt
             MOVE_SPEED *= 10;
@@ -197,7 +194,6 @@ void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap&
                 yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
                 pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
                 pitch_ = Clamp(pitch_, -90.0f, 90.0f);
-                // Reset rotation and set yaw and pitch again
                 this->cameraNode_->SetDirection(Vector3::FORWARD);
                 this->cameraNode_->Yaw(yaw_);
                 this->cameraNode_->Pitch(pitch_);
@@ -226,7 +222,8 @@ void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap&
 void GodzillaMainScene::SetupCharacter() {
     auto* cache = GetSubsystem<ResourceCache>();
     this->characterNode = this->scene_->CreateChild("CharacterNode");
-    this->characterNode->SetScale(0.05);
+    this->characterNode->SetScale(0.03);
+    this->characterNode->SetPosition(Vector3(0.0f, 100.0f, 0.0f));
 
     auto* modelNode = this->characterNode->CreateChild("CharacterModel");
     modelNode->SetRotation(Quaternion(180.0f, Vector3::UP));
@@ -236,14 +233,11 @@ void GodzillaMainScene::SetupCharacter() {
     modelObject->SetCastShadows(true);
     modelNode->CreateComponent<AnimationController>();
 
-    this->characterComponent = modelNode->CreateComponent<CharacterComponent>();
-
     auto* body = this->characterNode->CreateComponent<RigidBody>();
     body->SetCollisionLayer(1);
     body->SetMass(100.0f);
     body->SetAngularFactor(Vector3::ZERO);
     body->SetCollisionEventMode(COLLISION_ALWAYS);
-    body->SetFriction(100.0f);
 
     auto* shape = this->characterNode->CreateComponent<CollisionShape>();
     shape->SetCapsule(800.0f, 1800.0f, Vector3(0.0f, 900.0f, -100.0f));
@@ -254,7 +248,8 @@ void GodzillaMainScene::SetupCharacter() {
     this->CreateCollisionShapeForBone(skeleton, String("tail_6"), 20.0f, 30.0f, Vector3(0.0f, 0.0f, 5.0f));
     this->CreateCollisionShapeForBone(skeleton, String("tail_8"), 10.0f, 40.0f, Vector3(0.0f, 10.0f, 5.0f));
 
-    characterComponent->SetAnimationState(GodzillaState::RUN);
+    characterComponent = this->characterNode->CreateComponent<CharacterComponent>();
+    characterComponent->SetAnimationState(GodzillaState::IDLE);
 
 }
 
