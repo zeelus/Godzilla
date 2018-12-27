@@ -25,11 +25,12 @@
 
 
 #include "GodzillaMainScene.hpp"
-
 #include "CharacterComponent.hpp"
+#include "BuldingComponent.hpp"
 
 GodzillaMainScene::GodzillaMainScene(Context *context) : Application(context) {
     CharacterComponent::RegisterObject(context);
+    BuldingComponent::RegisterObject(context);
 }
 
 void GodzillaMainScene::Start() {
@@ -42,6 +43,8 @@ void GodzillaMainScene::Start() {
     this->SetupCharacter();
 
     this->SetupViewport();
+
+
 }
 
 void GodzillaMainScene::Setup() {
@@ -97,6 +100,8 @@ void GodzillaMainScene::CreateScene() {
     water->SetMaterial(cache->GetResource<Material>("Materials/Water.xml"));
     water->SetViewMask(0x80000000);
 
+
+    this->CreateBuilding(Vector3(350, 0, 350), 5, terrain);
 }
 
 void GodzillaMainScene::SetupCamera() {
@@ -142,6 +147,9 @@ void  GodzillaMainScene::SubscribeToEvents()
 void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData) {
 
     auto* input = this->GetSubsystem<Input>();
+
+    if (input->GetKeyDown(KEY_ESCAPE))
+        this->engine_->Exit();
 
     if (characterComponent) {
 
@@ -223,7 +231,7 @@ void GodzillaMainScene::SetupCharacter() {
     auto* cache = GetSubsystem<ResourceCache>();
     this->characterNode = this->scene_->CreateChild("CharacterNode");
     this->characterNode->SetScale(0.03);
-    this->characterNode->SetPosition(Vector3(0.0f, 100.0f, 0.0f));
+    this->characterNode->SetPosition(Vector3(0.0f, 10.0f, 0.0f));
 
     auto* modelNode = this->characterNode->CreateChild("CharacterModel");
     modelNode->SetRotation(Quaternion(180.0f, Vector3::UP));
@@ -235,7 +243,7 @@ void GodzillaMainScene::SetupCharacter() {
 
     auto* body = this->characterNode->CreateComponent<RigidBody>();
     body->SetCollisionLayer(1);
-    body->SetMass(100.0f);
+    body->SetMass(80.0f);
     body->SetAngularFactor(Vector3::ZERO);
     body->SetCollisionEventMode(COLLISION_ALWAYS);
 
@@ -266,7 +274,6 @@ void GodzillaMainScene::CreateTestBox() {
     boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneSmall.xml"));
     boxObject->SetCastShadows(true);
 
-    // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<RigidBody>();
     body->SetMass(2.50f);
     body->SetFriction(0.75f);
@@ -290,10 +297,31 @@ void GodzillaMainScene::CreateCollisionShapeForBone(Skeleton& skeleton, String n
     body->SetCollisionLayer(1);
     body->SetMass(2.0f);
     body->SetAngularFactor(Vector3::ZERO);
-    body->SetCollisionEventMode(COLLISION_ALWAYS);
-    body->SetFriction(100.0f);
 
     auto* shape = boneNode->CreateComponent<CollisionShape>();
     shape->SetCapsule(width, height, position);
+
+}
+
+void GodzillaMainScene::CreateBuilding(Vector3 position, short levels, Terrain *terrain) {
+
+    Node* buldingNode = scene_->CreateChild("Bulding");
+
+    auto* buldingComponet = buldingNode->CreateComponent<BuldingComponent>();
+
+    auto height = terrain->GetHeight(position);
+
+    buldingNode->SetPosition(Vector3(position.x_, height + 1.0f, position.z_));
+
+    buldingComponet->CreateBuldingsBlocks(levels);
+
+    auto* body = buldingNode->CreateComponent<RigidBody>();
+    body->SetCollisionLayer(1);
+    body->SetMass(0.0f);
+    body->SetAngularFactor(Vector3::ZERO);
+
+    auto* shape = buldingNode->CreateComponent<CollisionShape>();
+    float size = buldingComponet->getSize();
+    shape->SetBox(Vector3(3 * size, size, 3 * size));
 
 }

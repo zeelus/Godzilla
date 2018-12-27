@@ -9,6 +9,7 @@
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Skeleton.h>
+#include <Urho3D/Graphics/Terrain.h>
 #include "CharacterComponent.hpp"
 
 const float CAMERA_MIN_DIST = 20.0f;
@@ -56,6 +57,8 @@ private:
     void CreateTestBox();
 
     void CreateCollisionShapeForBone(Skeleton& skeleton, String name, float width, float height, Vector3 position = Vector3::ZERO);
+
+    void CreateBuilding(Vector3 position, short levels, Terrain* terrain);
 };
 
 
