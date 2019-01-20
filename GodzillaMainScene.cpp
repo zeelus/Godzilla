@@ -100,8 +100,18 @@ void GodzillaMainScene::CreateScene() {
     water->SetMaterial(cache->GetResource<Material>("Materials/Water.xml"));
     water->SetViewMask(0x80000000);
 
+    auto startPoint = Vector3(350, 0, 350);
+    int buldingsOffser = 50;
 
-    this->CreateBuilding(Vector3(350, 0, 350), 5, terrain);
+    for(int i = 0; i < 5; i++ ) {
+        for(int j = 0; j < 4; j++) {
+            int height = Random(3, 8);
+            auto buildingPos = Vector3(startPoint.x_ + buldingsOffser * j, 0, startPoint.z_ + buldingsOffser * i);
+            this->CreateBuilding(buildingPos, height, terrain);
+        }
+    }
+
+
 }
 
 void GodzillaMainScene::SetupCamera() {
@@ -243,7 +253,7 @@ void GodzillaMainScene::SetupCharacter() {
 
     auto* body = this->characterNode->CreateComponent<RigidBody>();
     body->SetCollisionLayer(1);
-    body->SetMass(80.0f);
+    body->SetMass(100.0f);
     body->SetAngularFactor(Vector3::ZERO);
     body->SetCollisionEventMode(COLLISION_ALWAYS);
 

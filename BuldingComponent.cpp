@@ -105,7 +105,7 @@ void BuldingComponent::DestridBulding() {
 
     for(auto* element : elements) {
         auto* body = element->CreateComponent<RigidBody>();
-        body->SetMass(0.50f);
+        body->SetMass(0.20f);
         body->SetFriction(0.75f);
         auto* shape = element->CreateComponent<CollisionShape>();
         shape->SetBox(Vector3::ONE);

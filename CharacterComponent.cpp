@@ -61,7 +61,9 @@ void CharacterComponent::FixedUpdate(float timeStep) {
     if (moveDir.LengthSquared() > 0.0f)
         moveDir.Normalize();
 
-//    if(onGround)
+    moveDir += Vector3::DOWN;
+
+    //if(onGround)
     body->ApplyImpulse(rot * moveDir * MOVE_FORCE);
 
     Vector3 brakeForce = -planeVelocity * BRAKE_FORCE;
