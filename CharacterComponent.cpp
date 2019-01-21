@@ -69,6 +69,8 @@ void CharacterComponent::FixedUpdate(float timeStep) {
     Vector3 brakeForce = -planeVelocity * BRAKE_FORCE;
     body->ApplyImpulse(brakeForce);
 
+    moveDir -= Vector3::DOWN;
+
     if (!(moveDir.Equals(Vector3::ZERO))) {
         this->SetAnimationState(GodzillaState::RUN);
     } else {

@@ -22,15 +22,19 @@
 #include <Urho3D/Physics/CollisionShape.h>
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Input/Input.h>
+#include <Urho3D/Audio/SoundSource.h>
+#include <Urho3D/Audio/Sound.h>
 
 
 #include "GodzillaMainScene.hpp"
 #include "CharacterComponent.hpp"
 #include "BuldingComponent.hpp"
+#include "BoxComponent.hpp"
 
 GodzillaMainScene::GodzillaMainScene(Context *context) : Application(context) {
     CharacterComponent::RegisterObject(context);
     BuldingComponent::RegisterObject(context);
+    BoxComponent::RegisterObject(context);
 }
 
 void GodzillaMainScene::Start() {
@@ -68,6 +72,8 @@ void GodzillaMainScene::CreateScene() {
     this->scene_->CreateComponent<Octree>();
 
     this->SetupCamera();
+
+//    this->SetSoundTrack();
 
     auto* skyNode = this->scene_->CreateChild("Sky");
     skyNode->SetScale(15000.0f);
@@ -333,5 +339,19 @@ void GodzillaMainScene::CreateBuilding(Vector3 position, short levels, Terrain *
     auto* shape = buldingNode->CreateComponent<CollisionShape>();
     float size = buldingComponet->getSize();
     shape->SetBox(Vector3(3 * size, size, 3 * size));
+
+}
+
+void GodzillaMainScene::SetSoundTrack() {
+
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    auto* soundNode = this->scene_->CreateChild("SoundNode");
+
+    auto* soundSorce = soundNode->CreateComponent<SoundSource>();
+
+    auto* song = cache->GetResource<Sound>("Sounds/Seekdestroy.ogg");
+
+    soundSorce->Play(song);
 
 }

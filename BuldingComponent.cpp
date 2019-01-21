@@ -19,6 +19,7 @@
 #include <Urho3D/IO/MemoryBuffer.h>
 
 #include "CharacterComponent.hpp"
+#include "BoxComponent.hpp"
 
 
 using namespace Urho3D;
@@ -109,6 +110,7 @@ void BuldingComponent::DestridBulding() {
         body->SetFriction(0.75f);
         auto* shape = element->CreateComponent<CollisionShape>();
         shape->SetBox(Vector3::ONE);
+        auto* boxComponent = element->CreateComponent<BoxComponent>();
     }
 }
 

@@ -29,7 +29,6 @@ public:
 
 private:
 
-
     SharedPtr<Scene> scene_;
     Camera* camera_;
     Node* cameraNode_;
@@ -59,6 +58,8 @@ private:
     void CreateCollisionShapeForBone(Skeleton& skeleton, String name, float width, float height, Vector3 position = Vector3::ZERO);
 
     void CreateBuilding(Vector3 position, short levels, Terrain* terrain);
+
+    void SetSoundTrack();
 };
 
 
