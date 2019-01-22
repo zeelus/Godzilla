@@ -6,9 +6,12 @@
 #include "GodzillaMainScene.hpp"
 
 #include <Urho3D/Core/Context.h>
+#include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Physics/CollisionShape.h>
 #include <Urho3D/Graphics/StaticModel.h>
+#include <Urho3D/Graphics/ParticleEffect.h>
+#include <Urho3D/Graphics/ParticleEmitter.h>
 #include <Urho3D/IO/MemoryBuffer.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
 
@@ -26,6 +29,7 @@ void BoxComponent::Start() {
 
     this->lifeTime = 0.0f;
     this->isDestroided = false;
+    this->ShowFire();
 
     SubscribeToEvent(GetNode(), E_NODECOLLISION, URHO3D_HANDLER(BoxComponent, HandleNodeCollision));
 }
@@ -33,10 +37,15 @@ void BoxComponent::Start() {
 void BoxComponent::FixedUpdate(float timeStep) {
     this->lifeTime += timeStep;
 
-    if(this->lifeTime >= BOX_LIFE_TIME && !isDestroided && onGround) {
+    if(!isDestroided && onGround) {
         this->DestroyedBox();
+        this->lifeTime = 0.0;
     }
 
+
+    if(isDestroided && (this->lifeTime >= BOX_FIRE_LIFE_TIME)) {
+        this->node_->Remove();
+    }
 }
 
 void BoxComponent::DestroyedBox() {
@@ -46,12 +55,13 @@ void BoxComponent::DestroyedBox() {
     this->GetComponent<RigidBody>()->Remove();
     this->GetComponent<CollisionShape>()->Remove();
     this->GetComponent<StaticModel>()->Remove();
-
-    this->ShowFire();
 }
 
 void BoxComponent::ShowFire() {
-    //TODO: Show fire when block is destrided;
+    auto* cache = GetSubsystem<ResourceCache>();
+    auto* emitter = this->node_->CreateComponent<ParticleEmitter>();
+    auto* effect = cache->GetResource<ParticleEffect>("Particle/torch_fire.xml");
+    emitter->SetEffect(effect);
 }
 
 void BoxComponent::HandleNodeCollision(StringHash eventType, VariantMap &eventData) {

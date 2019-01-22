@@ -10,6 +10,7 @@
 using namespace Urho3D;
 
 static float BOX_LIFE_TIME = 10.0f;
+static float BOX_FIRE_LIFE_TIME = 20.0f;
 
 class BoxComponent: public LogicComponent {
 
