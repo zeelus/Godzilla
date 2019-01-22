@@ -16,8 +16,8 @@ const unsigned CTRL_BACK = 2;
 const unsigned CTRL_LEFT = 4;
 const unsigned CTRL_RIGHT = 8;
 
-const float MOVE_FORCE = 150.0f;
-const float BRAKE_FORCE = 2.0f;
+const float MOVE_FORCE = 1000.0f;
+const float BRAKE_FORCE = 10.0f;
 
 using namespace Urho3D;
 
@@ -26,13 +26,20 @@ enum class GodzillaState {
     RUN
 };
 
+static float GODZILLA_SOUND_INTERWAL = 30.0f;
+
 class CharacterComponent: public LogicComponent {
 
     URHO3D_OBJECT(CharacterComponent, LogicComponent)
 
     RigidBody *body;
 
+    float lastSoundPlay = 0.0f;
+
     bool onGround = true;
+
+    void TryPlaySound(float timeStep);
+
 
 public:
 

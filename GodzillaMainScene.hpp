@@ -14,7 +14,7 @@
 
 const float CAMERA_MIN_DIST = 20.0f;
 const float CAMERA_INITIAL_DIST = 50.0f;
-const float CAMERA_MAX_DIST = 100.0f;
+const float CAMERA_MAX_DIST = 1000.0f;
 const float YAW_SENSITIVITY = 0.1f;
 
 using namespace Urho3D;

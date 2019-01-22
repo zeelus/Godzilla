@@ -33,6 +33,8 @@ class BuldingComponent: public LogicComponent {
 
     bool IsDestroid() const;
 
+    void PlaySound();
+
 public:
     static void RegisterObject(Context* context);
 

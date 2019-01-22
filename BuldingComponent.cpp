@@ -4,6 +4,7 @@
 
 #include "BuldingComponent.hpp"
 
+#include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Graphics/AnimationController.h>
 #include <Urho3D/Scene/Scene.h>
@@ -17,6 +18,9 @@
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/IO/MemoryBuffer.h>
+#include <Urho3D/Audio/SoundSource.h>
+#include <Urho3D/Audio/SoundSource3D.h>
+#include <Urho3D/Audio/Sound.h>
 
 #include "CharacterComponent.hpp"
 #include "BoxComponent.hpp"
@@ -112,10 +116,27 @@ void BuldingComponent::DestridBulding() {
         shape->SetBox(Vector3::ONE);
         auto* boxComponent = element->CreateComponent<BoxComponent>();
     }
+
+    this->PlaySound();
 }
 
 bool BuldingComponent::IsDestroid() const {
     return isDestroid;
+}
+
+void BuldingComponent::PlaySound() {
+    auto* cache = GetSubsystem<ResourceCache>();
+    auto* soundSource = this->node_->CreateComponent<SoundSource>();
+    auto* sound = cache->GetResource<Sound>("Sounds/Explosion.ogg");
+    soundSource->Play(sound);
+
+    auto* soundSource3D = this->node_->CreateComponent<SoundSource3D>();
+    auto* sound3D = cache->GetResource<Sound>("Sounds/torch.ogg");
+    soundSource3D->SetNearDistance(10.0f);
+    soundSource3D->SetFarDistance(500.0f);
+    soundSource3D->SetSoundType(SOUND_EFFECT);
+    soundSource3D->SetGain(0.5);
+    soundSource3D->Play(sound3D);
 }
 
 
