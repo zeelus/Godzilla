@@ -24,6 +24,8 @@
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Audio/SoundSource.h>
 #include <Urho3D/Audio/Sound.h>
+#include <Urho3D/Audio/SoundListener.h>
+#include <Urho3D/Audio/Audio.h>
 
 
 #include "GodzillaMainScene.hpp"
@@ -73,7 +75,7 @@ void GodzillaMainScene::CreateScene() {
 
     this->SetupCamera();
 
-//    this->SetSoundTrack();
+    this->SetSoundTrack();
 
     auto* skyNode = this->scene_->CreateChild("Sky");
     skyNode->SetScale(15000.0f);
@@ -85,7 +87,7 @@ void GodzillaMainScene::CreateScene() {
 
     auto* terrain = terrainNode->CreateComponent<Terrain>();
     terrain->SetPatchSize(128);
-    terrain->SetSpacing(Vector3(4, 0.5, 4));
+    terrain->SetSpacing(Vector3(4, 0.6, 4));
     terrain->SetSmoothing(true);
     terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
     terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
@@ -99,8 +101,8 @@ void GodzillaMainScene::CreateScene() {
     terrainShape->SetTerrain();
 
     auto* waterNode_ = scene_->CreateChild("Water");
-    waterNode_->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-    waterNode_->SetPosition(Vector3(0.0f, 40.0f, 0.0f));
+    waterNode_->SetScale(Vector3(2000.0f, 1.0f, 2000.0f));
+    waterNode_->SetPosition(Vector3(350.0f, 45.0f, 350.0f));
     auto* water = waterNode_->CreateComponent<StaticModel>();
     water->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
     water->SetMaterial(cache->GetResource<Material>("Materials/Water.xml"));
@@ -135,6 +137,9 @@ void GodzillaMainScene::SetupCamera() {
     camera_->SetFarClip(1600);
     camera_->SetNearClip(0.1);
     camera_->SetFov(75);
+
+    SoundListener* listener = cameraNode_->CreateComponent<SoundListener>();
+    GetSubsystem<Audio>()->SetListener(listener);
 
     //camera_->SetFillMode(FillMode::FILL_WIREFRAME);
 
@@ -228,7 +233,7 @@ void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap&
         const Quaternion& rot = characterNode->GetRotation();
         Quaternion dir = rot * Quaternion(characterComponent->controls_.pitch_, Vector3::RIGHT);
 
-        Vector3 aimPoint = characterNode->GetPosition() + rot * Vector3(0.0f, 80.0f, 0.0f);
+        Vector3 aimPoint = characterNode->GetPosition() + rot * Vector3(0.0f, 100.0f, -60.0f);
 
         Vector3 rayDir = dir * Vector3::BACK;
         float rayDistance = CAMERA_INITIAL_DIST;
@@ -274,6 +279,8 @@ void GodzillaMainScene::SetupCharacter() {
 
     characterComponent = this->characterNode->CreateComponent<CharacterComponent>();
     characterComponent->SetAnimationState(GodzillaState::IDLE);
+
+    this->characterNode->CreateComponent<SoundSource>();
 
 }
 
@@ -338,7 +345,8 @@ void GodzillaMainScene::CreateBuilding(Vector3 position, short levels, Terrain *
 
     auto* shape = buldingNode->CreateComponent<CollisionShape>();
     float size = buldingComponet->getSize();
-    shape->SetBox(Vector3(3 * size, size, 3 * size));
+    shape->SetBox(Vector3(3 * size, levels * size, 3 * size));
+    shape->SetPosition(Vector3(0.0f, (levels * size) / 2.0f, 0.0f));
 
 }
 

@@ -3,11 +3,14 @@
 //
 
 #include <Urho3D/Core/Context.h>
+#include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Graphics/AnimationController.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Input/Controls.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
 #include <Urho3D/IO/MemoryBuffer.h>
+#include <Urho3D/Audio/Sound.h>
+#include <Urho3D/Audio/SoundSource.h>
 
 #include "CharacterComponent.hpp"
 
@@ -79,6 +82,8 @@ void CharacterComponent::FixedUpdate(float timeStep) {
 
     onGround = false;
 
+    this->TryPlaySound(timeStep);
+
 }
 
 void CharacterComponent::HandleNodeCollision(StringHash eventType, VariantMap &eventData) {
@@ -106,6 +111,20 @@ void CharacterComponent::HandleNodeCollision(StringHash eventType, VariantMap &e
 
 CharacterComponent::CharacterComponent(Context *context) : LogicComponent(context) {
 
+}
+
+void CharacterComponent::TryPlaySound(float timeStep) {
+    this->lastSoundPlay += timeStep;
+
+    if(this->lastSoundPlay >= GODZILLA_SOUND_INTERWAL) {
+        this->lastSoundPlay = 0.0f;
+        auto* cache = GetSubsystem<ResourceCache>();
+        auto* soundSorce = this->GetComponent<SoundSource>();
+        if(soundSorce) {
+            auto* sound = cache->GetResource<Sound>("Sounds/Godzilla.wav");
+            soundSorce->Play(sound);
+        }
+    }
 }
 
 
