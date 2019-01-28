@@ -32,11 +32,13 @@
 #include "CharacterComponent.hpp"
 #include "BuldingComponent.hpp"
 #include "BoxComponent.hpp"
+#include "BallComponent.h"
 
 GodzillaMainScene::GodzillaMainScene(Context *context) : Application(context) {
     CharacterComponent::RegisterObject(context);
     BuldingComponent::RegisterObject(context);
     BoxComponent::RegisterObject(context);
+    BallComponent::RegisterObject(context);
 }
 
 void GodzillaMainScene::Start() {
@@ -180,6 +182,7 @@ void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData
         characterComponent->controls_.Set(CTRL_BACK, input->GetKeyDown(KEY_S));
         characterComponent->controls_.Set(CTRL_LEFT, input->GetKeyDown(KEY_A));
         characterComponent->controls_.Set(CTRL_RIGHT, input->GetKeyDown(KEY_D));
+        characterComponent->controls_.Set(CTRL_LEFT_MOUSE, input->GetMouseButtonDown(MOUSEB_LEFT));
 
 
         characterComponent->controls_.yaw_ += (float)input->GetMouseMoveX() * YAW_SENSITIVITY;
@@ -279,6 +282,7 @@ void GodzillaMainScene::SetupCharacter() {
 
     characterComponent = this->characterNode->CreateComponent<CharacterComponent>();
     characterComponent->SetAnimationState(GodzillaState::IDLE);
+    characterComponent->SetScene(this->scene_);
 
     this->characterNode->CreateComponent<SoundSource>();
 

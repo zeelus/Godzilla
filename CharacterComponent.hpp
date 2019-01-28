@@ -15,6 +15,7 @@ const unsigned CTRL_FORWARD = 1;
 const unsigned CTRL_BACK = 2;
 const unsigned CTRL_LEFT = 4;
 const unsigned CTRL_RIGHT = 8;
+const unsigned CTRL_LEFT_MOUSE = 16;
 
 const float MOVE_FORCE = 1000.0f;
 const float BRAKE_FORCE = 10.0f;
@@ -34,14 +35,20 @@ class CharacterComponent: public LogicComponent {
 
     RigidBody *body;
 
+    Scene *scene;
+
     float lastSoundPlay = 0.0f;
+    float lastEnergiiShot = 0.0f;
 
     bool onGround = true;
 
     void TryPlaySound(float timeStep);
 
+    void createEnergiBall() const ;
 
 public:
+
+    void SetScene(Scene *scene);
 
     static void RegisterObject(Context* context);
 
@@ -52,6 +59,8 @@ public:
     Controls controls_;
 
     void FixedUpdate(float timeStep) override;
+
+    void Update(float timeStep) override;
 
     void Start() override;
 

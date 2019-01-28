@@ -11,6 +11,14 @@
 #include <Urho3D/IO/MemoryBuffer.h>
 #include <Urho3D/Audio/Sound.h>
 #include <Urho3D/Audio/SoundSource.h>
+#include <Urho3D/Graphics/StaticModel.h>
+#include <Urho3D/Graphics/Model.h>
+#include <Urho3D/Graphics/ParticleEffect.h>
+#include <Urho3D/Graphics/ParticleEmitter.h>
+#include <Urho3D/Physics/RigidBody.h>
+#include <Urho3D/Physics/CollisionShape.h>
+
+#include "BallComponent.h"
 
 #include "CharacterComponent.hpp"
 
@@ -125,6 +133,55 @@ void CharacterComponent::TryPlaySound(float timeStep) {
             soundSorce->Play(sound);
         }
     }
+}
+
+void CharacterComponent::Update(float timeStep) {
+    this->lastEnergiiShot += timeStep;
+    if(controls_.IsDown(CTRL_LEFT_MOUSE) && this->lastEnergiiShot >= 1.0) {
+        this->createEnergiBall();
+        this->lastEnergiiShot = 0.0f;
+    }
+}
+
+void CharacterComponent::createEnergiBall() const {
+
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    auto* ballNode = this->scene->CreateChild("BALL");
+
+    auto* staticModel = ballNode->CreateComponent<StaticModel>();
+    auto* model = cache->GetResource<Model>("Models/planet.mdl");
+
+    staticModel->SetModel(model);
+
+    auto thisPosition = this->node_->GetPosition();
+    auto thisTransform = this->node_->GetWorldTransform();
+    auto thisRostation = this->node_->GetRotation();
+
+    ballNode->SetScale(Vector3(3.0f, 3.0f, 3.0f));
+    ballNode->SetPosition(Vector3(thisPosition.x_, thisPosition.y_+ 50.0f, thisPosition.z_+ 30.0f));
+    ballNode->RotateAround(thisPosition, thisRostation, TS_WORLD);
+
+
+    auto* body = ballNode->CreateComponent<RigidBody>();
+    body->SetMass(1.0f);
+    Vector3 shot = thisRostation * Vector3::FORWARD * 400.0f;
+    shot += Vector3::UP * 10.0f;
+    body->ApplyImpulse(shot);
+
+    auto* shape = ballNode->CreateComponent<CollisionShape>();
+    shape->SetCapsule(1.0f, 1.0f);
+
+    auto* emitter = ballNode->CreateComponent<ParticleEmitter>();
+    auto* effect = cache->GetResource<ParticleEffect>("Particle/Energii.xml");
+    emitter->SetEffect(effect);
+
+    ballNode->CreateComponent<BallComponent>();
+
+}
+
+void CharacterComponent::SetScene(Scene *scene) {
+    CharacterComponent::scene = scene;
 }
 
 
