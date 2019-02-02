@@ -26,6 +26,10 @@
 #include <Urho3D/Audio/Sound.h>
 #include <Urho3D/Audio/SoundListener.h>
 #include <Urho3D/Audio/Audio.h>
+#include <Urho3D/UI/Font.h>
+#include <Urho3D/UI/Text.h>
+#include <Urho3D/UI/UI.h>
+#include <sstream>
 
 
 #include "GodzillaMainScene.hpp"
@@ -75,6 +79,9 @@ void GodzillaMainScene::CreateScene() {
 
     this->scene_->CreateComponent<Octree>();
 
+    auto* ui = GetSubsystem<UI>();
+    ui->Clear();
+
     this->SetupCamera();
 
     this->SetSoundTrack();
@@ -117,10 +124,23 @@ void GodzillaMainScene::CreateScene() {
         for(int j = 0; j < 4; j++) {
             int height = Random(3, 8);
             auto buildingPos = Vector3(startPoint.x_ + buldingsOffser * j, 0, startPoint.z_ + buldingsOffser * i);
-            this->CreateBuilding(buildingPos, height, terrain);
+            auto buildingComoponent = this->CreateBuilding(buildingPos, height, terrain);
+            this->buldingVector.push_back(buildingComoponent);
         }
     }
 
+
+    timeText = ui->GetRoot()->CreateChild<Text>();
+    timeText->SetText("You time: 0:00:00");
+    timeText->SetFont(cache->GetResource<Font>("Fonts/PermanentMarker-Regular.ttf"), 20);
+    timeText->SetColor(Color(1.0f, 0.0f, 0.0f));
+
+    timeText->SetHorizontalAlignment(HA_LEFT);
+    timeText->SetVerticalAlignment(VA_TOP);
+
+    timer.Reset();
+
+    isGameEnd = false;
 
 }
 
@@ -169,12 +189,20 @@ void  GodzillaMainScene::SubscribeToEvents()
 
 void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData) {
 
+    this->TestEndGame();
+
     auto* input = this->GetSubsystem<Input>();
 
     if (input->GetKeyDown(KEY_ESCAPE))
         this->engine_->Exit();
 
-    if (characterComponent) {
+    if (input->GetKeyDown(KEY_R) && isGameEnd)
+        this->restartGame();
+
+    if(isGameEnd)
+        return;
+
+    if (characterComponent && characterNode) {
 
         characterComponent->controls_.Set(CTRL_FORWARD | CTRL_BACK | CTRL_LEFT | CTRL_RIGHT, false);
 
@@ -184,17 +212,35 @@ void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData
         characterComponent->controls_.Set(CTRL_RIGHT, input->GetKeyDown(KEY_D));
         characterComponent->controls_.Set(CTRL_LEFT_MOUSE, input->GetMouseButtonDown(MOUSEB_LEFT));
 
-
         characterComponent->controls_.yaw_ += (float)input->GetMouseMoveX() * YAW_SENSITIVITY;
         characterComponent->controls_.pitch_ += (float)input->GetMouseMoveY() * YAW_SENSITIVITY;
         characterComponent->controls_.pitch_ = Clamp(characterComponent->controls_.pitch_, -80.0f, 80.0f);
         characterNode->SetRotation(Quaternion(characterComponent->controls_.yaw_ , Vector3::UP));
+
+        SetUITimer();
     }
 
 
 }
 
+void GodzillaMainScene::SetUITimer() {
+    auto time = this->timer.GetMSec(false);
+    unsigned int sec = time / 1000;
+    unsigned int mili = time - (sec * 1000);
+    unsigned int min = sec / 60;
+    sec = sec - (min * 60);
+    stringstream s;
+    s << "You time: " << min << ":" << sec << ":" << mili;
+    string ss = s.str();
+    if(timeText)
+        timeText->SetText(ss.c_str());
+}
+
 void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData) {
+
+    if(isGameEnd)
+        return;
+
     scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
 
     if(isDebug) {
@@ -232,6 +278,8 @@ void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap&
             }
         }
     } else {
+
+        if(!characterComponent && !characterNode) return;
 
         const Quaternion& rot = characterNode->GetRotation();
         Quaternion dir = rot * Quaternion(characterComponent->controls_.pitch_, Vector3::RIGHT);
@@ -330,7 +378,7 @@ void GodzillaMainScene::CreateCollisionShapeForBone(Skeleton& skeleton, String n
 
 }
 
-void GodzillaMainScene::CreateBuilding(Vector3 position, short levels, Terrain *terrain) {
+BuldingComponent* GodzillaMainScene::CreateBuilding(Vector3 position, short levels, Terrain *terrain) {
 
     Node* buldingNode = scene_->CreateChild("Bulding");
 
@@ -352,6 +400,8 @@ void GodzillaMainScene::CreateBuilding(Vector3 position, short levels, Terrain *
     shape->SetBox(Vector3(3 * size, levels * size, 3 * size));
     shape->SetPosition(Vector3(0.0f, (levels * size) / 2.0f, 0.0f));
 
+
+    return buldingComponet;
 }
 
 void GodzillaMainScene::SetSoundTrack() {
@@ -365,5 +415,71 @@ void GodzillaMainScene::SetSoundTrack() {
     auto* song = cache->GetResource<Sound>("Sounds/Seekdestroy.ogg");
 
     soundSorce->Play(song);
+
+}
+
+void GodzillaMainScene::TestEndGame() {
+
+    for(auto bulidngComponent: this->buldingVector) {
+        if(!bulidngComponent->isDestroid) {
+            return;
+        }
+    }
+
+    this->ENDGAME();
+}
+
+void GodzillaMainScene::ENDGAME() {
+    if(isGameEnd) return;
+    isGameEnd = true;
+
+    this->scene_->SetUpdateEnabled(false);
+    this->showEndText();
+
+}
+
+void GodzillaMainScene::showEndText() {
+
+    auto* cache = GetSubsystem<ResourceCache>();
+    auto* ui = GetSubsystem<UI>();
+
+    // Construct new Text object, set string to display and font to use
+    auto* instructionText = ui->GetRoot()->CreateChild<Text>();
+    instructionText->SetText("Game Over");
+    instructionText->SetFont(cache->GetResource<Font>("Fonts/PermanentMarker-Regular.ttf"), 35);
+    instructionText->SetColor(Color(1.0f, 0.0f, 0.0f));
+
+    // Position the text relative to the screen center
+    instructionText->SetHorizontalAlignment(HA_CENTER);
+    instructionText->SetVerticalAlignment(VA_CENTER);
+
+    auto* instructionText2 = ui->GetRoot()->CreateChild<Text>();
+    String textCopy = this->timeText->GetText();
+    instructionText2->SetText(textCopy);
+    instructionText2->SetFont(cache->GetResource<Font>("Fonts/PermanentMarker-Regular.ttf"), 25);
+    instructionText2->SetColor(Color(1.0f, 0.0f, 0.0f));
+
+    instructionText2->SetHorizontalAlignment(HA_CENTER);
+    instructionText2->SetVerticalAlignment(VA_CENTER);
+    instructionText2->SetPosition(0, ui->GetRoot()->GetHeight() / 6);
+
+    auto* instructionText3 = ui->GetRoot()->CreateChild<Text>();
+    instructionText3->SetText("Press r to restart, ESC to exit.");
+    instructionText3->SetFont(cache->GetResource<Font>("Fonts/PermanentMarker-Regular.ttf"), 20);
+    instructionText3->SetColor(Color(1.0f, 0.0f, 0.0f));
+
+    instructionText3->SetHorizontalAlignment(HA_CENTER);
+    instructionText3->SetVerticalAlignment(VA_CENTER);
+    instructionText3->SetPosition(0, ui->GetRoot()->GetHeight() / 3);
+}
+
+void GodzillaMainScene::restartGame() {
+
+    characterNode->Remove();
+    scene_->Remove();
+    timeText->Remove();
+    timeText = nullptr;
+    Start();
+
 
 }

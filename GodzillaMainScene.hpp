@@ -10,7 +10,11 @@
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Skeleton.h>
 #include <Urho3D/Graphics/Terrain.h>
+#include <Urho3D/UI/Text.h>
 #include "CharacterComponent.hpp"
+#include <vector>
+
+#include "BuldingComponent.hpp"
 
 const float CAMERA_MIN_DIST = 20.0f;
 const float CAMERA_INITIAL_DIST = 50.0f;
@@ -33,7 +37,13 @@ private:
     Camera* camera_;
     Node* cameraNode_;
     Node* characterNode;
+    Text* timeText;
     CharacterComponent * characterComponent;
+    Timer timer;
+
+    std::vector<BuldingComponent*> buldingVector;
+
+    bool isGameEnd = false;
 
     bool isDebug = false;
 
@@ -57,9 +67,19 @@ private:
 
     void CreateCollisionShapeForBone(Skeleton& skeleton, String name, float width, float height, Vector3 position = Vector3::ZERO);
 
-    void CreateBuilding(Vector3 position, short levels, Terrain* terrain);
+    BuldingComponent* CreateBuilding(Vector3 position, short levels, Terrain* terrain);
 
     void SetSoundTrack();
+
+    void TestEndGame();
+
+    void ENDGAME();
+
+    void showEndText();
+
+    void restartGame();
+
+    void SetUITimer();
 };
 
 
