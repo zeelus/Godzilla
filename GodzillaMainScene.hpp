@@ -40,6 +40,7 @@ private:
     Text* timeText;
     CharacterComponent * characterComponent;
     Timer timer;
+    bool isMenu = true;
 
     std::vector<BuldingComponent*> buldingVector;
 
@@ -49,7 +50,9 @@ private:
 
     void Setup();
 
-    void CreateScene();
+    void CreateGameScene();
+
+    void CreateMenuScene();
 
     void SetupViewport();
 
@@ -80,6 +83,8 @@ private:
     void restartGame();
 
     void SetUITimer();
+
+    void showMenuUI();
 };
 
 

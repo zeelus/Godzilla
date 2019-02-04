@@ -50,12 +50,14 @@ void GodzillaMainScene::Start() {
 
     this->Setup();
 
-    this->CreateScene();
+    if(isMenu) {
+        this->CreateMenuScene();
+    } else {
+        this->CreateGameScene();
+    }
 
-    this->SetupCharacter();
 
     this->SetupViewport();
-
 
 }
 
@@ -70,7 +72,52 @@ void GodzillaMainScene::Setup() {
 
 }
 
-void GodzillaMainScene::CreateScene() {
+void GodzillaMainScene::CreateMenuScene() {
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    this->scene_ = new Scene(this->context_);
+    this->scene_->CreateComponent<Octree>();
+
+    this->SetupCamera();
+
+    auto* skyNode = this->scene_->CreateChild("Sky");
+    skyNode->SetScale(15000.0f);
+    auto* skybox = skyNode->CreateComponent<Skybox>();
+    skybox->SetModel(cache->GetResource<Model>("Data/Models/Box.mdl"));
+    skybox->SetMaterial(cache->GetResource<Material>("Data/Materials/Skybox.xml"));
+
+    auto* terrainNode = this->scene_->CreateChild("Terrain");
+
+    auto* terrain = terrainNode->CreateComponent<Terrain>();
+    terrain->SetPatchSize(128);
+    terrain->SetSpacing(Vector3(4, 0.6, 4));
+    terrain->SetSmoothing(true);
+    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+    terrain->SetCastShadows(true);
+    terrain->SetOccluder(true);
+
+    auto* waterNode_ = scene_->CreateChild("Water");
+    waterNode_->SetScale(Vector3(2000.0f, 1.0f, 2000.0f));
+    waterNode_->SetPosition(Vector3(350.0f, 45.0f, 350.0f));
+    auto* water = waterNode_->CreateComponent<StaticModel>();
+    water->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
+    water->SetMaterial(cache->GetResource<Material>("Materials/Water.xml"));
+    water->SetViewMask(0x80000000);
+
+    auto* soundNode = this->scene_->CreateChild("SoundNode");
+
+    auto* soundSorce = soundNode->CreateComponent<SoundSource>();
+
+    auto* song = cache->GetResource<Sound>("Sounds/Handpan.ogg");
+
+    soundSorce->Play(song);
+
+    showMenuUI();
+}
+
+void GodzillaMainScene::CreateGameScene() {
+
     auto* cache = GetSubsystem<ResourceCache>();
 
     this->scene_ = new Scene(this->context_);
@@ -78,7 +125,6 @@ void GodzillaMainScene::CreateScene() {
     scene_->CreateComponent<DebugRenderer>();
 
     this->scene_->CreateComponent<Octree>();
-
     auto* ui = GetSubsystem<UI>();
     ui->Clear();
 
@@ -142,6 +188,8 @@ void GodzillaMainScene::CreateScene() {
 
     isGameEnd = false;
 
+    this->SetupCharacter();
+
 }
 
 void GodzillaMainScene::SetupCamera() {
@@ -155,6 +203,7 @@ void GodzillaMainScene::SetupCamera() {
     zone->SetAmbientColor(Color(0.5, 0.5, 0.5));
 
     cameraNode_ = scene_->CreateChild("Camera");
+    cameraNode_->SetPosition(Vector3(0.0f, 46.0f, 0.0f));
     camera_ = cameraNode_->CreateComponent<Camera>();
     camera_->SetFarClip(1600);
     camera_->SetNearClip(0.1);
@@ -165,8 +214,6 @@ void GodzillaMainScene::SetupCamera() {
 
     //camera_->SetFillMode(FillMode::FILL_WIREFRAME);
 
-    //this->cameraNode_->SetPosition(Vector3(13, 30, 30));
-    //this->cameraNode_->SetDirection(Vector3::FORWARD);
 }
 
 void GodzillaMainScene::SetupViewport()  {
@@ -198,6 +245,13 @@ void GodzillaMainScene::HandleUpdate(StringHash eventType, VariantMap& eventData
 
     if (input->GetKeyDown(KEY_R) && isGameEnd)
         this->restartGame();
+
+    if (input->GetKeyDown(KEY_SPACE) && isMenu) {
+        auto* ui = GetSubsystem<UI>();
+        ui->GetRoot()->RemoveAllChildren();
+        isMenu = false;
+        this->restartGame();
+    }
 
     if(isGameEnd)
         return;
@@ -241,7 +295,7 @@ void GodzillaMainScene::HandlePostRenderUpdate(StringHash eventType, VariantMap&
     if(isGameEnd)
         return;
 
-    scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
+    //scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
 
     if(isDebug) {
         float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
@@ -430,7 +484,7 @@ void GodzillaMainScene::TestEndGame() {
 }
 
 void GodzillaMainScene::ENDGAME() {
-    if(isGameEnd) return;
+    if(isGameEnd || isMenu) return;
     isGameEnd = true;
 
     this->scene_->SetUpdateEnabled(false);
@@ -475,11 +529,36 @@ void GodzillaMainScene::showEndText() {
 
 void GodzillaMainScene::restartGame() {
 
-    characterNode->Remove();
+    if(characterNode)
+        characterNode->Remove();
     scene_->Remove();
-    timeText->Remove();
+    if(timeText)
+        timeText->Remove();
     timeText = nullptr;
     Start();
 
-
 }
+
+void GodzillaMainScene::showMenuUI() {
+    auto* cache = GetSubsystem<ResourceCache>();
+    auto* ui = GetSubsystem<UI>();
+
+    auto* instructionText = ui->GetRoot()->CreateChild<Text>();
+    instructionText->SetText("Godzilla - City Destroyer");
+    instructionText->SetFont(cache->GetResource<Font>("Fonts/PermanentMarker-Regular.ttf"), 35);
+    instructionText->SetColor(Color(44 / 255.0f, 140 / 255.0f, 54 / 255.0f));
+
+    instructionText->SetHorizontalAlignment(HA_CENTER);
+    instructionText->SetVerticalAlignment(VA_CENTER);
+
+    auto* instructionText2 = ui->GetRoot()->CreateChild<Text>();
+    instructionText2->SetText("Press SPACE key to play.");
+    instructionText2->SetFont(cache->GetResource<Font>("Fonts/PermanentMarker-Regular.ttf"), 20);
+    instructionText2->SetColor(Color(44 / 255.0f, 140 / 255.0f, 54 / 255.0f));
+
+    instructionText2->SetHorizontalAlignment(HA_CENTER);
+    instructionText2->SetVerticalAlignment(VA_CENTER);
+    instructionText2->SetPosition(0, ui->GetRoot()->GetHeight() / 3);
+}
+
+
